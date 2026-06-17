@@ -1,38 +1,25 @@
 # LeadMail Finder
 
-LeadMail Finder is an open-source desktop tool that helps you discover companies, collect publicly available business contact information, clean lead lists, and manage controlled email outreach from one place.
+LeadMail Finder is an open-source desktop tool for discovering companies, collecting publicly available business email addresses, validating domains, and preparing controlled outreach campaigns.
 
-It was originally created to simplify company research and outreach workflows for job seekers, freelancers, founders, recruiters, and small business owners.
-
-Everything runs locally on your computer. No cloud account is required.
+It runs entirely on your machine and is designed for job seekers, freelancers, founders, recruiters, agencies, and small teams that need a local-first workflow for company research and respectful email outreach.
 
 ---
 
 ## Why LeadMail Finder?
 
-Finding companies, collecting contact information, cleaning spreadsheets, and preparing outreach campaigns often requires multiple tools.
+Company research and outreach usually require multiple separate tools:
 
-LeadMail Finder combines these steps into a single local workflow:
+- Finding relevant companies
+- Importing and cleaning spreadsheets
+- Discovering company websites
+- Extracting public business emails
+- Validating domains
+- Preparing outreach lists
+- Sending emails safely and slowly
+- Tracking sending results
 
-- Discover companies
-- Import Google Maps exports
-- Extract public business emails
-- Remove duplicates
-- Validate domains
-- Build outreach lists
-- Send controlled SMTP campaigns
-
----
-
-## Example Workflow
-
-1. Search companies on Google Maps
-2. Export results with Instant Data Scraper
-3. Import the CSV or Excel file
-4. Extract public business emails
-5. Validate and clean the list
-6. Export the final outreach list
-7. Send controlled outreach emails
+LeadMail Finder combines these steps into a single local workflow.
 
 ---
 
@@ -42,91 +29,131 @@ LeadMail Finder combines these steps into a single local workflow:
 
 - Search companies by keyword and city
 - Google Maps workflow support
-- Import Google Maps exports
-- Multi-file CSV/Excel import
-- Company list preview
+- Import Google Maps / Instant Data Scraper exports
+- Import multiple CSV and Excel files
+- Merge company lists into a single dataset
+- Automatic duplicate cleanup
+- Company website normalization
+- Domain extraction and grouping
 
-### Data Processing
+### Teknopark Finder
 
-- CSV merge
-- Duplicate cleanup
-- Domain extraction
-- Domain-based grouping
-- Company data normalization
+- Discover companies directly from public Teknopark websites
+- Extract company websites from:
+  - Direct website links
+  - Text-based domains
+  - Internal company detail pages
+- JavaScript-rendered page support via Playwright
+- Broken SSL certificate tolerance where technically possible
+- Timeout and error handling for unstable company websites
+- Automatic public email scanning after company discovery
+- Export Teknopark results as CSV or Excel
 
-### Email Extraction
+### Email Discovery
 
-- Extract publicly available business emails from company websites
-- Scan common contact pages
-- Website timeout protection
-- Progress tracking
-- Resume extraction workflow
+- Extract publicly visible business emails from company websites
+- Scan homepage, contact, career, about, and HR-related pages
+- Detect `mailto:` emails
+- Detect common plain-text email formats
+- Deduplicate emails
+- Filter invalid or noisy matches
+- Timeout protection per website
+- Progress tracking during extraction
 
 ### Email Validation
 
 - MX record validation
 - Domain health checks
 - Invalid domain filtering
+- Domain-based grouping
+- Email-only export generation
+- Outreach-ready export generation
 
-### Export Options
+### Controlled Email Outreach
 
-- Full Excel export
-- Full CSV export
-- Email-only CSV export
-- Outreach-ready export
-- Sending log export
+LeadMail Finder includes a local SMTP-based outreach workflow designed for controlled, manual, and responsible sending.
 
-### Email Outreach
+Supported providers:
 
-- Gmail support
-- Outlook / Hotmail support
-- Yahoo support
-- Custom SMTP support
-- Gmail App Password support
-- Test email before campaign sending
-- One-by-one sending
-- Configurable delay
-- Maximum email limit per run
+- Gmail
+- Outlook / Hotmail
+- Yahoo
+- Custom SMTP servers
+
+Outreach safety features:
+
+- Test email required before campaign sending
+- One-by-one email sending
+- Configurable delay between emails
+- Maximum emails per run
 - Stop after current email
 - Live sending logs
-
-### Security
-
-- Credentials are never exported
-- Credentials are never stored in CSV files
-- Credentials are never stored in Excel files
-- Session-only authentication
+- Sending log export
+- Session-only SMTP credentials
 - Clear credentials action
-- Local-first architecture
 
-### User Experience
+Recommended safe starting configuration:
 
-- Real-time progress tracking
-- Pause and resume workflows
-- Download results at any time
-- Local processing
-- No cloud dependency
+- Send a test email first
+- Use a low maximum email count per run
+- Use at least 60 seconds delay between emails
+- Send only relevant, personalized, legitimate outreach
+- Avoid bulk unsolicited messaging
+
+### Privacy & Security
+
+- Runs completely locally
+- No cloud processing
+- No external database
+- No analytics or tracking
+- SMTP credentials remain session-only
+- SMTP credentials are never exported
+- SMTP credentials are never stored in CSV files
+- SMTP credentials are never stored in Excel files
+- SMTP credentials are never stored in sending logs
 
 ---
 
-## Security Notes
+## Main Workflows
 
-LeadMail Finder does not store SMTP credentials in files, CSV exports, Excel exports, logs, or generated reports.
+### Workflow 1 – CSV / Excel Import
 
-For Gmail and Yahoo accounts, use an App Password instead of your normal account password.
+1. Export company data from any source.
+2. Import one or more CSV/Excel files.
+3. Merge and clean the data.
+4. Discover or normalize company websites.
+5. Extract publicly available business emails.
+6. Validate domains.
+7. Export the final list.
 
-For custom domains, use SMTP credentials provided by your email provider.
+### Workflow 2 – Teknopark Finder
 
-Recommended safe configuration:
+1. Open the Teknopark Finder tab.
+2. Paste one or more public Teknopark company-list URLs.
+3. Discover company websites automatically.
+4. Scan websites for publicly visible business emails.
+5. Validate and clean the results.
+6. Export the final Teknopark lead list.
 
-- Maximum 25 emails per run
-- 60 seconds delay between emails
-- Send only to relevant public business addresses
-- Always send a test email before starting a campaign
+### Workflow 3 – Controlled Outreach Campaign
+
+1. Build or import a verified contact list.
+2. Configure SMTP credentials.
+3. Send a test email.
+4. Set delay and maximum sending limits.
+5. Start the campaign.
+6. Monitor live sending logs.
+7. Stop after the current email when needed.
+8. Export the sending log.
 
 ---
 
 ## Installation
+
+### Requirements
+
+- Python 3.11 or Python 3.12 recommended
+- Chromium browser for Playwright
 
 ### Clone Repository
 
@@ -145,7 +172,14 @@ source venv/bin/activate
 ### Install Dependencies
 
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+### Install Playwright Chromium
+
+```bash
+python -m playwright install chromium
 ```
 
 ### Run Application
@@ -154,13 +188,59 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+Default local URL:
+
+```text
+http://localhost:8501
+```
+
+---
+
+## Running After First Setup
+
+After the first installation, you only need:
+
+```bash
+cd leadmail-finder
+source venv/bin/activate
+streamlit run app.py
+```
+
+Stop the application with:
+
+```text
+Ctrl + C
+```
+
+---
+
+## Supported Input Sources
+
+- Google Maps exports
+- Instant Data Scraper exports
+- CSV files
+- Excel files (`.xlsx`)
+- Public Teknopark company directories
+- Custom company lists
+
+---
+
+## Supported Output Formats
+
+- Full CSV export
+- Full Excel export
+- Email-only CSV export
+- Outreach-ready CSV export
+- Outreach-ready Excel export
+- Sending log export
+
 ---
 
 ## Responsible Use
 
-LeadMail Finder is intended for discovering publicly available business contact information and conducting legitimate outreach.
+LeadMail Finder is intended for discovering publicly available business contact information and supporting legitimate outreach workflows.
 
-Please use the software responsibly and respectfully.
+Users are responsible for complying with applicable laws, regulations, email provider policies, anti-spam rules, and platform terms of service.
 
 Do not use LeadMail Finder for:
 
@@ -168,21 +248,41 @@ Do not use LeadMail Finder for:
 - Harassment
 - Bulk unsolicited messaging
 - Illegal data collection
+- Circumventing access controls
 - Activities that violate local regulations
 - Activities that violate email provider policies
 
+The project author and contributors are not responsible for misuse of the software.
+
 ---
 
-## Disclaimer
+## Security Notes
 
-LeadMail Finder is designed for discovering publicly available business contact information and supporting legitimate outreach workflows.
+- Use Gmail or Yahoo App Passwords instead of normal account passwords.
+- Use provider-specific SMTP credentials for custom domains.
+- Keep sending limits low and delays high.
+- Always send a test email before starting a campaign.
+- Review your recipient list before sending.
+- Send only relevant and respectful messages.
 
-Users are solely responsible for complying with applicable laws, regulations, email provider policies, and anti-spam requirements.
+---
 
-The project authors and contributors are not responsible for misuse of the software.
+## Tech Stack
+
+- Python
+- Streamlit
+- Pandas
+- Requests
+- BeautifulSoup
+- Playwright
+- OpenPyXL
+- DNSPython
+- TLDExtract
 
 ---
 
 ## License
 
 MIT License
+
+Copyright (c) 2026 AlpWare Studio

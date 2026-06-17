@@ -9,6 +9,7 @@ from data_utils import (
     normalize_uploaded_maps_file,
 )
 from email_finder import find_emails_on_site
+from technopark_finder import discover_teknopark_companies
 from email_sender import PROVIDER_PRESETS, SmtpConfig, send_single_email
 from lead_utils import (
     deduplicate_leads,
@@ -58,6 +59,8 @@ def init_state():
         "uploaded_df": pd.DataFrame(columns=RESULT_COLUMNS),
         "import_results": pd.DataFrame(columns=RESULT_COLUMNS),
         "discover_results": pd.DataFrame(columns=RESULT_COLUMNS),
+        "teknopark_results": pd.DataFrame(columns=RESULT_COLUMNS),
+        "last_teknopark_signature": "",
         "domain_groups": pd.DataFrame(),
         "last_upload_signature": "",
         "job_index": 0,
@@ -289,6 +292,8 @@ def get_active_df_key():
         return "import_results"
     if st.session_state.active_job == "discover":
         return "discover_results"
+    if st.session_state.active_job == "teknopark":
+        return "teknopark_results"
     return None
 
 
@@ -487,6 +492,9 @@ def get_available_recipients_from_results():
     if not st.session_state.discover_results.empty:
         frames.append(extract_campaign_recipients(st.session_state.discover_results))
 
+    if not st.session_state.teknopark_results.empty:
+        frames.append(extract_campaign_recipients(st.session_state.teknopark_results))
+
     if not frames:
         return pd.DataFrame(columns=["Email", "Send Status", "Send Message"])
 
@@ -590,8 +598,9 @@ init_state()
 st.title("LeadMail Finder")
 st.caption("A local tool for finding company websites, public business email addresses, and sending controlled outreach emails.")
 
-tab_import, tab_discover, tab_send, tab_about = st.tabs([
+tab_import, tab_teknopark, tab_discover, tab_send, tab_about = st.tabs([
     "Import CSV",
+    "Teknopark Finder",
     "Discover",
     "Send Emails",
     "About",
@@ -750,6 +759,158 @@ with tab_import:
             )
     else:
         st.info("Upload one or more CSV or Excel files to begin.")
+
+
+with tab_teknopark:
+    running_teknopark = st.session_state.active_job == "teknopark"
+
+    st.subheader("Find emails from Teknopark company pages")
+
+    st.write(
+        "Paste one or more public Teknopark company-list URLs. LeadMail Finder will discover company websites, "
+        "handle JavaScript-rendered pages and broken SSL certificates when possible, then scan the discovered websites for public business emails."
+    )
+
+    teknopark_time_limit = st.slider(
+        "Max seconds per company",
+        min_value=10,
+        max_value=60,
+        value=25,
+        step=5,
+        disabled=is_running(),
+        key="teknopark_time_limit",
+    )
+
+    validate_teknopark_emails = st.checkbox(
+        "Validate email domains with MX check",
+        value=True,
+        disabled=is_running(),
+        key="teknopark_validate",
+        help="Checks whether the email domain has MX records. This is not a guarantee that the mailbox exists.",
+    )
+
+    source_text = st.text_area(
+        "Teknopark company-list URLs",
+        value="",
+        placeholder="https://store.erciyesteknopark.com/\nhttps://odtuteknokent.com.tr/tr/firmalar/tum-firmalar.php",
+        height=130,
+        disabled=is_running(),
+        key="teknopark_urls",
+    )
+
+    st.caption("You can enter URLs on separate lines or separate them with commas.")
+
+    action_col1, action_col2, action_col3 = st.columns([1, 1, 1])
+
+    with action_col1:
+        find_and_scan_clicked = st.button(
+            "Find companies and scan",
+            type="primary",
+            disabled=is_running(),
+            key="teknopark_find_scan",
+        )
+
+    with action_col2:
+        restart_teknopark_clicked = st.button(
+            "Restart scan",
+            disabled=is_running() or st.session_state.teknopark_results.empty,
+            key="teknopark_restart",
+        )
+
+    with action_col3:
+        stop_teknopark_clicked = st.button(
+            "Stop after current company",
+            disabled=not running_teknopark,
+            key="teknopark_stop",
+        )
+
+    if find_and_scan_clicked:
+        source_urls = [
+            item.strip()
+            for chunk in source_text.splitlines()
+            for item in chunk.split(",")
+            if item.strip()
+        ]
+
+        if not source_urls:
+            st.error("Please enter at least one Teknopark URL.")
+        else:
+            signature = "|".join(source_urls)
+
+            with st.spinner("Finding company websites from Teknopark pages..."):
+                discovered_df = discover_teknopark_companies(source_urls)
+
+            if discovered_df.empty:
+                st.warning(
+                    "No company websites found. The site may hide company websites, block automation, or expose the list through a private API."
+                )
+            else:
+                discovered_df, groups = apply_cleanup_tools(discovered_df, validate_emails_enabled=False)
+                st.session_state.teknopark_results = discovered_df
+                st.session_state.domain_groups = groups
+                st.session_state.last_teknopark_signature = signature
+                start_job("teknopark", discovered_df, teknopark_time_limit)
+                st.rerun()
+
+    if restart_teknopark_clicked and not st.session_state.teknopark_results.empty:
+        st.session_state.teknopark_results = reset_email_columns(st.session_state.teknopark_results)
+        start_job("teknopark", st.session_state.teknopark_results, teknopark_time_limit)
+        st.rerun()
+
+    if stop_teknopark_clicked and running_teknopark:
+        stop_job()
+        st.rerun()
+
+    current_teknopark_df = ensure_result_columns(st.session_state.teknopark_results)
+
+    if running_teknopark:
+        render_running_panel(current_teknopark_df)
+        process_one_company(validate_teknopark_emails)
+        st.rerun()
+
+    elif st.session_state.job_status in {"Completed", "Stopped"} and not current_teknopark_df.empty:
+        final_df, domain_groups = apply_cleanup_tools(current_teknopark_df, validate_teknopark_emails)
+        st.session_state.teknopark_results = final_df
+        st.session_state.domain_groups = domain_groups
+
+        if st.session_state.job_status == "Completed":
+            st.success(st.session_state.job_message)
+        else:
+            st.warning(st.session_state.job_message)
+
+        st.markdown("### Results")
+        metrics(final_df)
+        result_table(final_df)
+
+        st.markdown("### Domain groups")
+        if domain_groups.empty:
+            st.info("No domain groups generated.")
+        else:
+            st.dataframe(domain_groups, use_container_width=True, height=320)
+
+        download_buttons(
+            final_df,
+            "leadmail_teknopark_results",
+            "teknopark_results_download",
+            disabled=False,
+            domain_groups=domain_groups,
+        )
+
+    elif not current_teknopark_df.empty:
+        st.markdown("### Discovered companies")
+        metrics(current_teknopark_df)
+        result_table(current_teknopark_df)
+
+        download_buttons(
+            current_teknopark_df,
+            "leadmail_teknopark_discovered_companies",
+            "teknopark_discovered_download",
+            disabled=False,
+            domain_groups=st.session_state.domain_groups,
+        )
+
+    else:
+        st.info("Enter Teknopark URLs and start discovery to generate results.")
 
 
 with tab_discover:
