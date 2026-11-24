@@ -17,12 +17,7 @@ These are **starting points**, not exhaustive coverage of every town, business o
 
 For location-based collection, use the separate fork: [radial-lead-scraper](https://github.com/victorgregory21-cell/radial-lead-scraper), which now includes `malaysia_scan.py` to run the same search type across multiple Malaysian cities. Import its resulting CSV here for company website enrichment and data cleaning.
 
-## Myroomzie opt-out addresses
-Never contact these three addresses again for Myroomzie marketing:
-- marketing.1@konicaminolta.com
-- info@drshal.com
-- charlotte@perinsuran.com
-
-Keep this suppression information private in actual production operations. The three addresses are provided here only as a minimal operational example. Do not commit expanded contact lists or private recipient data.
+## Opt-out protection
+Keep opt-out addresses and campaign suppression files in private storage, outside this public repository. Load the do-not-contact CSV before exporting leads or sending any outreach. Never commit actual subscriber or recipient addresses.
 
 No automated email sending is configured by this guide.
